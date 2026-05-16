@@ -75,7 +75,33 @@ body {
 }
 
 h2 {
-  margin: 0 0 10px;
+  margin: 0 0 12px;
+  color: #17202a;
   font-size: 16px;
+  font-weight: 700;
   line-height: 1.45;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.facts div {
+  display: grid;
+  gap: 3px;
+}
+
+.facts dt {
+  color: #7b7368;
+  font-size: 12px;
+}
+
+.facts dd {
+  margin: 0;
+  color: #17202a;
+  font-size: 15px;
+  font-weight: 700;
 }

@@ -11,6 +11,7 @@ type Auction = {
   id: number
   address: string
   minimum_sale_price: number | null
+  sale_date: string | null
   current_status: string | null
   sale_spec_status: string
   images: AuctionImage[]
@@ -56,7 +57,16 @@ function AuctionList() {
                 {auction.current_status && <span>{auction.current_status}</span>}
               </div>
               <h2>{auction.address}</h2>
-              <strong>{auction.minimum_sale_price?.toLocaleString('ko-KR') ?? '-'}원</strong>
+              <dl className="facts">
+                <div>
+                  <dt>최저가</dt>
+                  <dd>{auction.minimum_sale_price?.toLocaleString('ko-KR') ?? '-'}원</dd>
+                </div>
+                <div>
+                  <dt>매각기일</dt>
+                  <dd>{auction.sale_date ?? '-'}</dd>
+                </div>
+              </dl>
             </div>
           </article>
         ))}
