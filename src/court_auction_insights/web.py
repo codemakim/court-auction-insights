@@ -1,18 +1,19 @@
 import json
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from .crawler_source import CrawlerSource
 from .db import get_latest_enrichment
 
 
-def create_app(crawler_db_path: Path, insights_db_path: Path) -> FastAPI:
+def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root: Path | None = None) -> FastAPI:
     app = FastAPI()
     templates = Jinja2Templates(directory=Path(__file__).parent / "templates")
     source = CrawlerSource(crawler_db_path)
+    image_root = Path(crawler_image_root or "/var/lib/court-auction-collector/data/images").resolve()
 
     @app.get("/", response_class=HTMLResponse)
     def list_auctions(request: Request):
@@ -31,5 +32,22 @@ def create_app(crawler_db_path: Path, insights_db_path: Path) -> FastAPI:
             "auction_detail.html",
             {"auction": auction, "enrichment": enrichment, "bullets": bullets},
         )
+
+    @app.get("/media/{auction_id}/{image_index}")
+    def media(auction_id: int, image_index: int):
+        auction = source.get_auction(auction_id)
+        if auction is None:
+            raise HTTPException(status_code=404)
+        image = next((image for image in auction.images if image.image_index == image_index), None)
+        if image is None:
+            raise HTTPException(status_code=404)
+        path = Path(image.file_path).resolve()
+        try:
+            path.relative_to(image_root)
+        except ValueError:
+            raise HTTPException(status_code=404)
+        if not path.exists():
+            raise HTTPException(status_code=404)
+        return FileResponse(path)
 
     return app

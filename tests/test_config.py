@@ -17,3 +17,11 @@ def test_settings_load_mutable_values_from_environment(monkeypatch):
     assert settings.db_path == Path("/tmp/insights.db")
     assert settings.ollama_model == "gemma4:26b"
     assert settings.web_port == 8787
+
+
+def test_settings_load_crawler_image_root(monkeypatch):
+    monkeypatch.setenv("INSIGHTS_CRAWLER_DB_PATH", "/tmp/crawler.db")
+    monkeypatch.setenv("INSIGHTS_DB_PATH", "/tmp/insights.db")
+    monkeypatch.setenv("INSIGHTS_CRAWLER_IMAGE_ROOT", "/tmp/images")
+    settings = Settings(_env_file=None)
+    assert settings.crawler_image_root == Path("/tmp/images")

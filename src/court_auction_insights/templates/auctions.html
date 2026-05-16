@@ -4,6 +4,11 @@
   <h1>경매 인사이트</h1>
   {% for item in items %}
     <article>
+      {% if item.auction.images %}
+        <img src="/media/{{ item.auction.id }}/{{ item.auction.images[0].image_index }}" alt="{{ item.auction.images[0].alt_text or item.auction.address }}">
+      {% else %}
+        <div>등록된 사진 없음</div>
+      {% endif %}
       <h2><a href="/auctions/{{ item.auction.id }}">{{ item.auction.address }}</a></h2>
       {% if item.auction.sale_spec_status == 'not_uploaded' %}
         <span>매각물건명세서 미업로드</span>

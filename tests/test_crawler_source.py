@@ -15,3 +15,9 @@ def test_list_auctions_returns_downloaded_sale_spec_text(crawler_db):
     assert rows[1].external_key == "2024타경2-1"
     assert rows[1].sale_spec_status == "downloaded"
     assert rows[1].sale_spec_markdown == "# markdown"
+
+
+def test_list_auctions_returns_ordered_image_metadata(crawler_db):
+    rows = CrawlerSource(crawler_db).list_auctions()
+    assert rows[1].images[0].image_index == 1
+    assert rows[1].images[0].alt_text == "전경도_1"

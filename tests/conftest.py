@@ -41,6 +41,16 @@ def crawler_db(tmp_path: Path) -> Path:
             last_download_attempt_at TEXT,
             last_download_error TEXT
         );
+        CREATE TABLE auction_images (
+            id INTEGER PRIMARY KEY,
+            auction_id INTEGER NOT NULL,
+            image_index INTEGER NOT NULL,
+            alt_text TEXT,
+            file_path TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            byte_size INTEGER NOT NULL,
+            downloaded_at TEXT NOT NULL
+        );
         CREATE TABLE document_texts (
             id INTEGER PRIMARY KEY,
             document_id INTEGER NOT NULL,
@@ -69,6 +79,11 @@ def crawler_db(tmp_path: Path) -> Path:
     conn.execute(
         """
         INSERT INTO document_texts VALUES (20, 10, 'extracted', 'raw text', '# markdown', '2026-05-16', 'v1')
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO auction_images VALUES (30, 2, 1, '전경도_1', '/tmp/images/2024타경2-1/001.png', 'hash', 123, '2026-05-16')
         """
     )
     conn.commit()

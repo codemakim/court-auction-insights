@@ -2,6 +2,15 @@
 <html lang="ko">
 <body>
   <h1>{{ auction.address }}</h1>
+  {% if auction.images %}
+    <section>
+      {% for image in auction.images %}
+        <img src="/media/{{ auction.id }}/{{ image.image_index }}" alt="{{ image.alt_text or auction.address }}">
+      {% endfor %}
+    </section>
+  {% else %}
+    <div>등록된 사진 없음</div>
+  {% endif %}
   {% if auction.sale_spec_status == 'not_uploaded' %}
     <span>매각물건명세서 미업로드</span>
   {% endif %}

@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-from .models import AuctionSourceRecord
+from .models import AuctionImageRecord, AuctionSourceRecord
 
 
 class CrawlerSource:
@@ -12,13 +12,16 @@ class CrawlerSource:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute(self._query()).fetchall()
-        return [self._to_record(row) for row in rows]
+            image_rows = conn.execute(self._image_query()).fetchall()
+        images = self._group_images(image_rows)
+        return [self._to_record(row, images.get(row["id"], ())) for row in rows]
 
     def get_auction(self, auction_id: int) -> AuctionSourceRecord | None:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             row = conn.execute(self._query("WHERE a.id = ?"), (auction_id,)).fetchone()
-        return self._to_record(row) if row else None
+            image_rows = conn.execute(self._image_query("WHERE auction_id = ?"), (auction_id,)).fetchall()
+        return self._to_record(row, self._group_images(image_rows).get(auction_id, ())) if row else None
 
     @staticmethod
     def _query(where_clause: str = "") -> str:
@@ -48,7 +51,20 @@ class CrawlerSource:
         """
 
     @staticmethod
-    def _to_record(row: sqlite3.Row) -> AuctionSourceRecord:
+    def _image_query(where_clause: str = "") -> str:
+        return f"SELECT auction_id, image_index, alt_text, file_path FROM auction_images {where_clause} ORDER BY auction_id, image_index"
+
+    @staticmethod
+    def _group_images(rows: list[sqlite3.Row]) -> dict[int, tuple[AuctionImageRecord, ...]]:
+        grouped: dict[int, list[AuctionImageRecord]] = {}
+        for row in rows:
+            grouped.setdefault(row["auction_id"], []).append(
+                AuctionImageRecord(row["image_index"], row["alt_text"], row["file_path"])
+            )
+        return {auction_id: tuple(images) for auction_id, images in grouped.items()}
+
+    @staticmethod
+    def _to_record(row: sqlite3.Row, images: tuple[AuctionImageRecord, ...] = ()) -> AuctionSourceRecord:
         if row["sale_spec_document_id"] is None:
             status = "not_uploaded"
         elif row["download_status"] == "downloaded" and row["extraction_status"] == "extracted":
@@ -70,4 +86,5 @@ class CrawlerSource:
             sale_spec_document_id=row["sale_spec_document_id"],
             sale_spec_content_hash=row["sale_spec_content_hash"],
             sale_spec_markdown=row["markdown_text"],
+            images=images,
         )

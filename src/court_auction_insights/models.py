@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class AuctionImageRecord:
+    image_index: int
+    alt_text: str | None
+    file_path: str
+
+
+@dataclass(frozen=True)
 class AuctionSourceRecord:
     id: int
     external_key: str
@@ -16,3 +23,4 @@ class AuctionSourceRecord:
     sale_spec_document_id: int | None
     sale_spec_content_hash: str | None
     sale_spec_markdown: str | None
+    images: tuple[AuctionImageRecord, ...] = ()

@@ -39,5 +39,5 @@ def main() -> None:
         )
         print(json.dumps(worker.run_once().__dict__, ensure_ascii=False))
         return
-    app = create_app(settings.crawler_db_path, settings.db_path)
+    app = create_app(settings.crawler_db_path, settings.db_path, settings.crawler_image_root)
     uvicorn.run(app, host=settings.web_host, port=settings.web_port)

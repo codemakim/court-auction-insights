@@ -40,3 +40,40 @@ def test_detail_page_shows_summary_when_enrichment_exists(tmp_path, crawler_db):
     assert response.status_code == 200
     assert "서울시 B" in response.text
     assert "사람 확인 권장" in response.text
+
+
+def test_list_page_shows_representative_image_and_detail_gallery(tmp_path, crawler_db):
+    image_root = tmp_path / "images"
+    image_path = image_root / "2024타경2-1" / "001.png"
+    image_path.parent.mkdir(parents=True)
+    image_path.write_bytes(b"png")
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute("UPDATE auction_images SET file_path = ? WHERE id = 30", (str(image_path),))
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db, image_root))
+
+    list_response = client.get("/")
+    detail_response = client.get("/auctions/2")
+    media_response = client.get("/media/2/1")
+
+    assert '/media/2/1' in list_response.text
+    assert '/media/2/1' in detail_response.text
+    assert media_response.status_code == 200
+
+
+def test_media_route_blocks_files_outside_image_root(tmp_path, crawler_db):
+    image_root = tmp_path / "images"
+    outside = tmp_path / "outside.png"
+    outside.write_bytes(b"png")
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute("UPDATE auction_images SET file_path = ? WHERE id = 30", (str(outside),))
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db, image_root))
+
+    response = client.get("/media/2/1")
+
+    assert response.status_code == 404

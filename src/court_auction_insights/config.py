@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="INSIGHTS_", env_file=".env", extra="ignore")
 
     crawler_db_path: Path
+    crawler_image_root: Path = Path("/var/lib/court-auction-collector/data/images")
     db_path: Path
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "gemma4:26b"
