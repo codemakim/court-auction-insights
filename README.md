@@ -32,3 +32,22 @@ court-auction-insights serve
 ```
 
 웹 UI는 기본적으로 `127.0.0.1:8787`에만 바인딩됩니다. 외부에서 볼 필요가 생기면 별도 공개 포트 대신 사설 네트워크 프록시 계층을 두는 구성을 권장합니다.
+
+## 프론트엔드 개발
+
+백엔드 API는 FastAPI가 담당하고, 제품 UI는 `frontend/`의 React 앱이 담당합니다.
+
+```bash
+# terminal 1
+court-auction-insights serve
+
+# terminal 2
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+기본 개발 주소:
+- backend API: `http://127.0.0.1:8787`
+- frontend dev server: Vite가 출력하는 localhost URL

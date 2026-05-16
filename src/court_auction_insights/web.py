@@ -15,6 +15,44 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
     source = CrawlerSource(crawler_db_path)
     image_root = Path(crawler_image_root or "/var/lib/court-auction-collector/data/images").resolve()
 
+
+    def serialize_auction(auction, enrichment=None):
+        return {
+            "id": auction.id,
+            "external_key": auction.external_key,
+            "case_number": auction.case_number,
+            "item_number": auction.item_number,
+            "address": auction.address,
+            "property_category": auction.property_category,
+            "minimum_sale_price": auction.minimum_sale_price,
+            "sale_date": auction.sale_date,
+            "current_status": auction.current_status,
+            "sale_spec_status": auction.sale_spec_status,
+            "images": [
+                {
+                    "image_index": image.image_index,
+                    "alt_text": image.alt_text,
+                    "url": f"/media/{auction.id}/{image.image_index}",
+                }
+                for image in auction.images
+            ],
+            "enrichment": dict(enrichment) if enrichment is not None else None,
+        }
+
+    @app.get("/api/auctions")
+    def api_list_auctions():
+        return [
+            serialize_auction(auction, get_latest_enrichment(insights_db_path, auction.id))
+            for auction in source.list_auctions()
+        ]
+
+    @app.get("/api/auctions/{auction_id}")
+    def api_auction_detail(auction_id: int):
+        auction = source.get_auction(auction_id)
+        if auction is None:
+            raise HTTPException(status_code=404)
+        return serialize_auction(auction, get_latest_enrichment(insights_db_path, auction_id))
+
     @app.get("/", response_class=HTMLResponse)
     def list_auctions(request: Request):
         auctions = []

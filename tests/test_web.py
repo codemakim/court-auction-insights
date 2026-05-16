@@ -77,3 +77,22 @@ def test_media_route_blocks_files_outside_image_root(tmp_path, crawler_db):
     response = client.get("/media/2/1")
 
     assert response.status_code == 404
+
+
+def test_api_list_and_detail_include_photos(tmp_path, crawler_db):
+    image_root = tmp_path / "images"
+    image_path = image_root / "2024타경2-1" / "001.png"
+    image_path.parent.mkdir(parents=True)
+    image_path.write_bytes(b"png")
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute("UPDATE auction_images SET file_path = ? WHERE id = 30", (str(image_path),))
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db, image_root))
+
+    listing = client.get("/api/auctions").json()
+    detail = client.get("/api/auctions/2").json()
+
+    assert listing[1]["images"][0]["url"] == "/media/2/1"
+    assert detail["images"][0]["url"] == "/media/2/1"
