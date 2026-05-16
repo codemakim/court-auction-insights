@@ -1,0 +1,1 @@
+"""Court auction insights application."""
