@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko">
+<body>
+  <h1>{{ auction.address }}</h1>
+  {% if auction.sale_spec_status == 'not_uploaded' %}
+    <span>매각물건명세서 미업로드</span>
+  {% endif %}
+  {% if enrichment and enrichment['status'] == 'success' %}
+    <section>
+      <h2>{{ enrichment['summary_title'] }}</h2>
+      <ul>{% for bullet in bullets %}<li>{{ bullet }}</li>{% endfor %}</ul>
+      <p>{{ enrichment['risk_comment'] }}</p>
+    </section>
+  {% endif %}
+</body>
+</html>

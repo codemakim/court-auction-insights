@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ko">
+<body>
+  <h1>경매 인사이트</h1>
+  {% for item in items %}
+    <article>
+      <h2><a href="/auctions/{{ item.auction.id }}">{{ item.auction.address }}</a></h2>
+      {% if item.auction.sale_spec_status == 'not_uploaded' %}
+        <span>매각물건명세서 미업로드</span>
+      {% endif %}
+    </article>
+  {% endfor %}
+</body>
+</html>

@@ -24,3 +24,6 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.scripts]
+court-auction-insights = "court_auction_insights.cli:main"
