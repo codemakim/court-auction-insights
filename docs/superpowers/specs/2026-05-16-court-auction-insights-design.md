@@ -182,3 +182,30 @@ Review workflow, filters, richer change timelines, manual notes.
 
 ### Phase 3
 Chat over stored auction/enrichment/change-event data, and if needed, a cleaner API/event boundary between crawler and insights.
+
+## Auction photos
+The crawler owns source image collection and persists ordered photo metadata plus local files. The insights app consumes those crawler-owned records rather than duplicating the files.
+
+### UI behavior
+- list cards show the first available auction photo as the representative image,
+- detail pages show the full ordered photo set,
+- auctions with no photos remain visible and show a neutral placeholder,
+- photo availability is independent from sale-spec availability.
+
+### Integration contract
+The crawler database exposes `auction_images` rows containing:
+- `auction_id`
+- `image_index`
+- `alt_text`
+- `file_path`
+- `content_hash`
+- `byte_size`
+- `downloaded_at`
+
+The insights app reads those rows and serves only files that live under a configured trusted image root:
+
+```dotenv
+INSIGHTS_CRAWLER_IMAGE_ROOT=/var/lib/court-auction-collector/data/images
+```
+
+This preserves one source of truth for raw media while allowing the UI to render representative thumbnails and ordered galleries.
