@@ -209,3 +209,22 @@ INSIGHTS_CRAWLER_IMAGE_ROOT=/var/lib/court-auction-collector/data/images
 ```
 
 This preserves one source of truth for raw media while allowing the UI to render representative thumbnails and ordered galleries.
+
+## Frontend architecture decision
+The product UI should move from temporary Jinja templates to a dedicated React frontend.
+
+### Chosen split
+- **FastAPI backend**: crawler DB reads, enrichment reads, media serving, REST endpoints, and worker-adjacent domain logic.
+- **React frontend (Vite)**: mobile-first cards, detail views, photo galleries, filters, sorting, and later conversational surfaces.
+
+### Why not collapse everything into Next.js
+A single Next.js app would be viable for a mostly web-only product, but this system already has Python-native responsibilities that are not naturally request/response UI work:
+- local Ollama enrichment workers,
+- SQLite source integration with the crawler,
+- batch/background processing,
+- future data-maintenance jobs.
+
+Keeping those in Python while letting React specialize in interaction design keeps the system simpler at the responsibility boundary.
+
+### Migration policy
+The current Jinja pages are temporary proving-ground surfaces. Once the React UI reaches feature parity for list/detail/photo display, the Jinja views should stop being the primary UI path rather than accumulating parallel product work.
