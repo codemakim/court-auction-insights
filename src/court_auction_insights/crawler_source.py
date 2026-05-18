@@ -15,14 +15,27 @@ class CrawlerSource:
             rows = conn.execute(self._query()).fetchall()
             image_rows = conn.execute(self._image_query()).fetchall()
         images = self._group_images(image_rows)
-        return [self._to_record(row, images.get(row["id"], ())) for row in rows]
+        records = [self._to_record(row, images.get(row["id"], ())) for row in rows]
+        return self._suppress_case_shared_images(records)
 
     def get_auction(self, auction_id: int) -> AuctionSourceRecord | None:
         with sqlite3.connect(self.db_path) as conn:
             conn.row_factory = sqlite3.Row
             row = conn.execute(self._query("WHERE a.id = ?"), (auction_id,)).fetchone()
-            image_rows = conn.execute(self._image_query("WHERE auction_id = ?"), (auction_id,)).fetchall()
-        return self._to_record(row, self._group_images(image_rows).get(auction_id, ())) if row else None
+            if row is None:
+                return None
+            case_rows = conn.execute(self._query("WHERE a.case_number = ?"), (row["case_number"],)).fetchall()
+            case_ids = tuple(case_row["id"] for case_row in case_rows)
+            placeholders = ",".join("?" for _ in case_ids)
+            image_rows = conn.execute(
+                self._image_query(f"WHERE auction_id IN ({placeholders})"),
+                case_ids,
+            ).fetchall()
+        images = self._group_images(image_rows)
+        records = self._suppress_case_shared_images(
+            [self._to_record(case_row, images.get(case_row["id"], ())) for case_row in case_rows]
+        )
+        return next(record for record in records if record.id == auction_id)
 
     @staticmethod
     def _query(where_clause: str = "") -> str:
@@ -54,14 +67,14 @@ class CrawlerSource:
 
     @staticmethod
     def _image_query(where_clause: str = "") -> str:
-        return f"SELECT auction_id, image_index, alt_text, file_path FROM auction_images {where_clause} ORDER BY auction_id, image_index"
+        return f"SELECT auction_id, image_index, alt_text, file_path, content_hash FROM auction_images {where_clause} ORDER BY auction_id, image_index"
 
     @staticmethod
     def _group_images(rows: list[sqlite3.Row]) -> dict[int, tuple[AuctionImageRecord, ...]]:
         grouped: dict[int, list[AuctionImageRecord]] = {}
         for row in rows:
             grouped.setdefault(row["auction_id"], []).append(
-                AuctionImageRecord(row["image_index"], row["alt_text"], row["file_path"])
+                AuctionImageRecord(row["image_index"], row["alt_text"], row["file_path"], row["content_hash"])
             )
         return {auction_id: tuple(images) for auction_id, images in grouped.items()}
 
@@ -93,3 +106,33 @@ class CrawlerSource:
             sale_spec_markdown=row["markdown_text"],
             images=images,
         )
+
+    @staticmethod
+    def _suppress_case_shared_images(records: list[AuctionSourceRecord]) -> list[AuctionSourceRecord]:
+        by_case: dict[str, list[AuctionSourceRecord]] = {}
+        for record in records:
+            by_case.setdefault(record.case_number, []).append(record)
+
+        shared_ids: set[int] = set()
+        for case_records in by_case.values():
+            by_signature: dict[tuple[str, ...], list[AuctionSourceRecord]] = {}
+            for record in case_records:
+                if not record.images:
+                    continue
+                signature = tuple(image.content_hash for image in record.images)
+                by_signature.setdefault(signature, []).append(record)
+            for same_images in by_signature.values():
+                if len(same_images) < 2:
+                    continue
+                if len({record.address for record in same_images}) > 1:
+                    shared_ids.update(record.id for record in same_images)
+
+        return [
+            AuctionSourceRecord(
+                **{
+                    **record.__dict__,
+                    "images": () if record.id in shared_ids else record.images,
+                }
+            )
+            for record in records
+        ]

@@ -27,6 +27,15 @@ def test_list_auctions_returns_ordered_image_metadata(crawler_db):
 def test_list_auctions_derives_district_and_orders_newest_first(crawler_db):
     rows = CrawlerSource(crawler_db).list_auctions()
 
-    assert [row.external_key for row in rows] == ["2024타경2-1", "2024타경1-1"]
-    assert rows[0].district == "동작구"
-    assert rows[1].district == "관악구"
+    assert [row.external_key for row in rows] == ["2024타경3-2", "2024타경3-1", "2024타경2-1", "2024타경1-1"]
+    assert rows[0].district == "관악구"
+    assert rows[2].district == "동작구"
+
+
+def test_list_auctions_hides_case_shared_images_for_different_addresses(crawler_db):
+    rows = CrawlerSource(crawler_db).list_auctions()
+
+    first = next(row for row in rows if row.external_key == "2024타경3-1")
+    second = next(row for row in rows if row.external_key == "2024타경3-2")
+    assert first.images == ()
+    assert second.images == ()

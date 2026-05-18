@@ -6,6 +6,7 @@ class AuctionImageRecord:
     image_index: int
     alt_text: str | None
     file_path: str
+    content_hash: str
 
 
 @dataclass(frozen=True)

@@ -3,6 +3,12 @@ import type { Auction } from '../types'
 
 type Props = { auction: Auction }
 
+function saleSpecLabel(status: Auction['sale_spec_status']) {
+  if (status === 'not_uploaded') return '명세서 미업로드'
+  if (status === 'extraction_failed') return '명세서 추출 실패'
+  return '명세서 있음'
+}
+
 export function AuctionCard({ auction }: Props) {
   return (
     <a className="card" href={`/auctions/${auction.id}`}>
@@ -15,7 +21,7 @@ export function AuctionCard({ auction }: Props) {
         <div className="badges">
           {auction.district ? <span>{auction.district}</span> : null}
           {auction.residential_subtype ? <span>{auction.residential_subtype}</span> : null}
-          {auction.sale_spec_status === 'not_uploaded' ? <span>명세서 미업로드</span> : <span>명세서 있음</span>}
+          <span>{saleSpecLabel(auction.sale_spec_status)}</span>
           <span>{auction.enrichment_status === 'pending' ? 'AI 요약 전' : 'AI 요약 완료'}</span>
         </div>
         <h2>{auction.address}</h2>

@@ -69,21 +69,23 @@ def crawler_db(tmp_path: Path) -> Path:
         [
             (1, "2024타경1-1", "2024타경1", "1", "서울특별시 관악구 봉천동 1", "건물", "아파트", 100, 80, 1, "2026-06-01", "매각기일", None, "2026-05-01", "2026-05-16"),
             (2, "2024타경2-1", "2024타경2", "1", "서울특별시 동작구 사당동 2", "건물", "다세대", 200, 160, 0, "2026-06-02", "매각기일", None, "2026-05-01", "2026-05-17"),
+            (3, "2024타경3-1", "2024타경3", "1", "서울특별시 동작구 사당동 3", "건물", "다세대", 220, 180, 0, "2026-06-03", "매각기일", None, "2026-05-01", "2026-05-17"),
+            (4, "2024타경3-2", "2024타경3", "2", "서울특별시 관악구 봉천동 4", "건물", "다세대", 230, 190, 0, "2026-06-04", "매각기일", None, "2026-05-01", "2026-05-17"),
         ],
     )
-    conn.execute(
+    conn.executescript(
         """
-        INSERT INTO documents VALUES (10, 2, 'sale_spec', 1, '매각물건명세서', '/tmp/spec.pdf', '2026-05-16', 'downloaded', 'abc123', 1, '2026-05-16', NULL)
-        """
-    )
-    conn.execute(
-        """
-        INSERT INTO document_texts VALUES (20, 10, 'extracted', 'raw text', '# markdown', '2026-05-16', 'v1')
+        INSERT INTO documents VALUES (10, 2, 'sale_spec', 1, '매각물건명세서', '/tmp/spec.pdf', '2026-05-16', 'downloaded', 'abc123', 1, '2026-05-16', NULL);
+        INSERT INTO documents VALUES (11, 4, 'sale_spec', 1, '매각물건명세서', '/tmp/spec-failed.pdf', '2026-05-16', 'downloaded', 'def456', 1, '2026-05-16', NULL);
+        INSERT INTO document_texts VALUES (20, 10, 'extracted', 'raw text', '# markdown', '2026-05-16', 'v1');
+        INSERT INTO document_texts VALUES (21, 11, 'failed', NULL, NULL, '2026-05-16', 'v1');
         """
     )
-    conn.execute(
+    conn.executescript(
         """
-        INSERT INTO auction_images VALUES (30, 2, 1, '전경도_1', '/tmp/images/2024타경2-1/001.png', 'hash', 123, '2026-05-16')
+        INSERT INTO auction_images VALUES (30, 2, 1, '전경도_1', '/tmp/images/2024타경2-1/001.png', 'unique-hash', 123, '2026-05-16');
+        INSERT INTO auction_images VALUES (31, 3, 1, '전경도_1', '/tmp/images/2024타경3-1/001.png', 'shared-hash', 123, '2026-05-16');
+        INSERT INTO auction_images VALUES (32, 4, 1, '전경도_1', '/tmp/images/2024타경3-2/001.png', 'shared-hash', 123, '2026-05-16');
         """
     )
     conn.commit()

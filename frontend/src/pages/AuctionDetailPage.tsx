@@ -8,6 +8,12 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
   if (error || !data) return <main className="page"><p>상세 정보를 불러오지 못했습니다.</p></main>
 
   const bullets = data.enrichment?.summary_bullets_json ? JSON.parse(data.enrichment.summary_bullets_json) as string[] : []
+  const saleSpecLabel =
+    data.sale_spec_status === 'not_uploaded'
+      ? '명세서 미업로드'
+      : data.sale_spec_status === 'extraction_failed'
+        ? '명세서 추출 실패'
+        : '명세서 있음'
 
   return (
     <main className="page detail-page">
@@ -22,7 +28,7 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
           <div className="badges">
             {data.district ? <span>{data.district}</span> : null}
             {data.residential_subtype ? <span>{data.residential_subtype}</span> : null}
-            {data.sale_spec_status === 'not_uploaded' ? <span>명세서 미업로드</span> : <span>명세서 있음</span>}
+            <span>{saleSpecLabel}</span>
           </div>
           <h1>{data.address}</h1>
           <dl className="detail-facts">

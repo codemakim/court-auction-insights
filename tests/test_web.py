@@ -137,8 +137,8 @@ def test_api_list_supports_filters_sort_and_enrichment_status(tmp_path, crawler_
     assert [item["external_key"] for item in filtered] == ["2024타경2-1"]
     assert filtered[0]["district"] == "동작구"
     assert filtered[0]["enrichment_status"] == "completed"
-    assert [item["external_key"] for item in pending] == ["2024타경1-1"]
-    assert [item["external_key"] for item in price_asc] == ["2024타경1-1", "2024타경2-1"]
+    assert [item["external_key"] for item in pending] == ["2024타경3-2", "2024타경3-1", "2024타경1-1"]
+    assert [item["external_key"] for item in price_asc] == ["2024타경1-1", "2024타경2-1", "2024타경3-1", "2024타경3-2"]
 
 
 def test_api_detail_serializes_pending_enrichment_state(tmp_path, crawler_db):
@@ -150,3 +150,13 @@ def test_api_detail_serializes_pending_enrichment_state(tmp_path, crawler_db):
 
     assert detail["district"] == "관악구"
     assert detail["enrichment_status"] == "pending"
+
+
+def test_api_list_filters_extraction_failed_sale_specs(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    items = client.get("/api/auctions", params={"sale_spec_status": "extraction_failed"}).json()
+
+    assert [item["external_key"] for item in items] == ["2024타경3-2"]

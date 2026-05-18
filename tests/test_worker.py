@@ -14,25 +14,26 @@ class FakeOllamaClient:
         }
 
 
-def test_worker_enriches_newest_eligible_auction_first(tmp_path, crawler_db):
+def test_worker_marks_newest_non_eligible_auction_as_waiting(tmp_path, crawler_db):
     insights_db = tmp_path / "insights.db"
     init_db(insights_db)
 
     result = EnrichmentWorker(CrawlerSource(crawler_db), insights_db, FakeOllamaClient()).run_once()
 
+    assert result.status == "waiting_for_source_document"
+    assert get_latest_enrichment(insights_db, 4)["status"] == "waiting_for_source_document"
+
+
+def test_worker_reaches_downloaded_sale_spec_after_skipping_newer_non_eligible_rows(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    worker = EnrichmentWorker(CrawlerSource(crawler_db), insights_db, FakeOllamaClient())
+    worker.run_once()  # auction 4: extraction_failed
+    worker.run_once()  # auction 3: not_uploaded
+
+    result = worker.run_once()  # auction 2: downloaded
+
     row = get_latest_enrichment(insights_db, 2)
     assert result.status == "success"
     assert row["status"] == "success"
     assert row["model_name"] == "gemma4:26b"
-
-
-def test_worker_marks_missing_document_as_waiting_after_newer_eligible_row_is_processed(tmp_path, crawler_db):
-    insights_db = tmp_path / "insights.db"
-    init_db(insights_db)
-    worker = EnrichmentWorker(CrawlerSource(crawler_db), insights_db, FakeOllamaClient())
-    worker.run_once()
-
-    result = worker.run_once()
-
-    assert result.status == "waiting_for_source_document"
-    assert get_latest_enrichment(insights_db, 1)["status"] == "waiting_for_source_document"
