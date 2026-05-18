@@ -24,7 +24,7 @@ This project is early but already has the core seams in place:
 - local Ollama enrichment worker scaffold
 - explicit handling for auctions whose `매각물건명세서` has not been uploaded yet
 
-The current UI is the first product shell, not the final design. It already shows real crawler data and photos, and is being evolved toward richer mobile cards, detail pages, change tracking, and AI-assisted triage.
+The current UI is the first usable product shell, not the final design. It already shows real crawler data and photos, supports first-pass browsing filters, and is being evolved toward richer mobile cards, change tracking, and AI-assisted triage.
 
 ## Architecture
 
@@ -142,6 +142,15 @@ GET /api/auctions/{id}
 GET /media/{auction_id}/{image_index}
 ```
 
+`GET /api/auctions` currently supports:
+
+```text
+q, district, subtype, min_price, max_price,
+sale_spec_status, enrichment_status, sort
+```
+
+The React browse page exposes those as first-pass controls for address/case search, district, building subtype, minimum-price range, sale-spec availability, AI-summary state, and common sort modes.
+
 ### 3. Start the frontend
 
 Open a second terminal:
@@ -211,11 +220,11 @@ court-auction-insights/
 
 Near-term work:
 
-1. complete the React detail view and mobile card polish,
-2. run real single-auction Ollama enrichment against collected sale-spec text,
-3. surface review labels and explanations in the UI,
-4. consume crawler change events for “what changed?” timelines,
-5. add richer filters and saved review workflows.
+1. run real single-auction Ollama enrichment against collected sale-spec text,
+2. surface review labels and explanations in the UI,
+3. complete reliable `failed_auction_count` parsing in the crawler before promoting it to a primary UI filter,
+4. define explicit area semantics before adding area-based filtering,
+5. consume crawler change events for “what changed?” timelines and later saved review workflows.
 
 Later possibilities:
 

@@ -16,7 +16,7 @@ class FakeResponse:
 
 def test_ollama_client_parses_structured_json(monkeypatch):
     monkeypatch.setattr("court_auction_insights.enrichment.requests.post", lambda *args, **kwargs: FakeResponse())
-    auction = AuctionSourceRecord(1, "k", "c", "1", "서울", "아파트", 1, None, None, "downloaded", 1, "h", "# md")
+    auction = AuctionSourceRecord(1, "k", "c", "1", "서울", "건물", "아파트", None, 1, None, None, "downloaded", 1, "h", "# md")
 
     result = OllamaClient("http://127.0.0.1:11434", "gemma4:26b").enrich(auction)
 

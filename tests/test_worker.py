@@ -14,17 +14,19 @@ class FakeOllamaClient:
         }
 
 
-def test_worker_marks_missing_document_as_waiting(tmp_path, crawler_db):
+def test_worker_enriches_newest_eligible_auction_first(tmp_path, crawler_db):
     insights_db = tmp_path / "insights.db"
     init_db(insights_db)
 
     result = EnrichmentWorker(CrawlerSource(crawler_db), insights_db, FakeOllamaClient()).run_once()
 
-    assert result.status == "waiting_for_source_document"
-    assert get_latest_enrichment(insights_db, 1)["status"] == "waiting_for_source_document"
+    row = get_latest_enrichment(insights_db, 2)
+    assert result.status == "success"
+    assert row["status"] == "success"
+    assert row["model_name"] == "gemma4:26b"
 
 
-def test_worker_enriches_one_eligible_auction_after_waiting_row_exists(tmp_path, crawler_db):
+def test_worker_marks_missing_document_as_waiting_after_newer_eligible_row_is_processed(tmp_path, crawler_db):
     insights_db = tmp_path / "insights.db"
     init_db(insights_db)
     worker = EnrichmentWorker(CrawlerSource(crawler_db), insights_db, FakeOllamaClient())
@@ -32,7 +34,5 @@ def test_worker_enriches_one_eligible_auction_after_waiting_row_exists(tmp_path,
 
     result = worker.run_once()
 
-    row = get_latest_enrichment(insights_db, 2)
-    assert result.status == "success"
-    assert row["status"] == "success"
-    assert row["model_name"] == "gemma4:26b"
+    assert result.status == "waiting_for_source_document"
+    assert get_latest_enrichment(insights_db, 1)["status"] == "waiting_for_source_document"
