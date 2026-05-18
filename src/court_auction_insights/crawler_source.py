@@ -48,12 +48,17 @@ class CrawlerSource:
                 a.address,
                 a.property_category,
                 a.residential_subtype,
+                a.appraisal_value,
                 a.minimum_sale_price,
+                a.failed_auction_count,
                 a.sale_date,
                 a.current_status,
+                a.appraisal_summary,
                 d.id AS sale_spec_document_id,
                 d.content_hash AS sale_spec_content_hash,
+                d.available AS sale_spec_available,
                 d.download_status,
+                d.last_download_error,
                 dt.extraction_status,
                 dt.markdown_text
             FROM auctions a
@@ -80,9 +85,13 @@ class CrawlerSource:
 
     @staticmethod
     def _to_record(row: sqlite3.Row, images: tuple[AuctionImageRecord, ...] = ()) -> AuctionSourceRecord:
-        if row["sale_spec_document_id"] is None:
+        if row["sale_spec_document_id"] is None or not row["sale_spec_available"]:
             status = "not_uploaded"
-        elif row["download_status"] == "downloaded" and row["extraction_status"] == "extracted":
+        elif row["download_status"] == "failed":
+            status = "download_failed"
+        elif row["download_status"] != "downloaded":
+            status = "download_pending"
+        elif row["extraction_status"] == "extracted":
             status = "downloaded"
         else:
             status = "extraction_failed"
@@ -97,10 +106,14 @@ class CrawlerSource:
             property_category=row["property_category"],
             residential_subtype=row["residential_subtype"],
             district=district_match.group(1) if district_match else None,
+            appraisal_value=row["appraisal_value"],
             minimum_sale_price=row["minimum_sale_price"],
+            failed_auction_count=row["failed_auction_count"],
             sale_date=row["sale_date"],
             current_status=row["current_status"],
+            appraisal_summary=row["appraisal_summary"],
             sale_spec_status=status,
+            sale_spec_error=row["last_download_error"],
             sale_spec_document_id=row["sale_spec_document_id"],
             sale_spec_content_hash=row["sale_spec_content_hash"],
             sale_spec_markdown=row["markdown_text"],

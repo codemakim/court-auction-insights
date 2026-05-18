@@ -39,3 +39,12 @@ def test_list_auctions_hides_case_shared_images_for_different_addresses(crawler_
     second = next(row for row in rows if row.external_key == "2024타경3-2")
     assert first.images == ()
     assert second.images == ()
+
+
+def test_list_auctions_distinguishes_sale_spec_states(crawler_db):
+    rows = CrawlerSource(crawler_db).list_auctions()
+    by_key = {row.external_key: row for row in rows}
+
+    assert by_key['2024타경1-1'].sale_spec_status == 'not_uploaded'
+    assert by_key['2024타경2-1'].sale_spec_status == 'downloaded'
+    assert by_key['2024타경3-2'].sale_spec_status == 'extraction_failed'

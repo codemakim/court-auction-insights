@@ -160,3 +160,16 @@ def test_api_list_filters_extraction_failed_sale_specs(tmp_path, crawler_db):
     items = client.get("/api/auctions", params={"sale_spec_status": "extraction_failed"}).json()
 
     assert [item["external_key"] for item in items] == ["2024타경3-2"]
+
+
+def test_api_detail_includes_review_fields(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    detail = client.get("/api/auctions/2").json()
+
+    assert detail["appraisal_value"] == 200
+    assert detail["failed_auction_count"] == 0
+    assert detail["appraisal_summary"] is None
+    assert detail["sale_spec_status"] == "downloaded"

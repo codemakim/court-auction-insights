@@ -26,10 +26,14 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             "property_category": auction.property_category,
             "residential_subtype": auction.residential_subtype,
             "district": auction.district,
+            "appraisal_value": auction.appraisal_value,
             "minimum_sale_price": auction.minimum_sale_price,
+            "failed_auction_count": auction.failed_auction_count,
             "sale_date": auction.sale_date,
             "current_status": auction.current_status,
+            "appraisal_summary": auction.appraisal_summary,
             "sale_spec_status": auction.sale_spec_status,
+            "sale_spec_error": auction.sale_spec_error,
             "images": [
                 {
                     "image_index": image.image_index,

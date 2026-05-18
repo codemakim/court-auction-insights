@@ -5,6 +5,8 @@ type Props = { auction: Auction }
 
 function saleSpecLabel(status: Auction['sale_spec_status']) {
   if (status === 'not_uploaded') return '명세서 미업로드'
+  if (status === 'download_pending') return '명세서 다운로드 대기'
+  if (status === 'download_failed') return '명세서 다운로드 실패'
   if (status === 'extraction_failed') return '명세서 추출 실패'
   return '명세서 있음'
 }
@@ -33,6 +35,10 @@ export function AuctionCard({ auction }: Props) {
           <div>
             <dt>매각기일</dt>
             <dd>{auction.sale_date ?? '-'}</dd>
+          </div>
+          <div>
+            <dt>유찰</dt>
+            <dd>{auction.failed_auction_count == null ? '-' : `${auction.failed_auction_count}회`}</dd>
           </div>
         </dl>
       </div>

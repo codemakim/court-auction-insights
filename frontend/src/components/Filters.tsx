@@ -28,6 +28,8 @@ export function Filters({ query, onChange }: Props) {
         <option value="">명세서 전체</option>
         <option value="downloaded">명세서 있음</option>
         <option value="not_uploaded">미업로드</option>
+        <option value="download_pending">다운로드 대기</option>
+        <option value="download_failed">다운로드 실패</option>
         <option value="extraction_failed">추출 실패</option>
       </select>
       <select value={query.enrichment_status ?? ''} onChange={(event) => update('enrichment_status', event.target.value)}>
