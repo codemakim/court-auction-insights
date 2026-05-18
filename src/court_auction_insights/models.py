@@ -16,6 +16,8 @@ class AuctionSourceRecord:
     item_number: str
     address: str
     property_category: str
+    residential_subtype: str | None
+    district: str | None
     minimum_sale_price: int | None
     sale_date: str | None
     current_status: str | None

@@ -1,3 +1,4 @@
+import re
 import sqlite3
 from pathlib import Path
 
@@ -33,6 +34,7 @@ class CrawlerSource:
                 a.item_number,
                 a.address,
                 a.property_category,
+                a.residential_subtype,
                 a.minimum_sale_price,
                 a.sale_date,
                 a.current_status,
@@ -47,7 +49,7 @@ class CrawlerSource:
             LEFT JOIN document_texts dt
                 ON dt.document_id = d.id
             {where_clause}
-            ORDER BY a.id
+            ORDER BY a.last_seen_at DESC, a.id DESC
         """
 
     @staticmethod
@@ -72,6 +74,7 @@ class CrawlerSource:
         else:
             status = "extraction_failed"
 
+        district_match = re.search(r"([가-힣]+구)", row["address"])
         return AuctionSourceRecord(
             id=row["id"],
             external_key=row["external_key"],
@@ -79,6 +82,8 @@ class CrawlerSource:
             item_number=row["item_number"],
             address=row["address"],
             property_category=row["property_category"],
+            residential_subtype=row["residential_subtype"],
+            district=district_match.group(1) if district_match else None,
             minimum_sale_price=row["minimum_sale_price"],
             sale_date=row["sale_date"],
             current_status=row["current_status"],
