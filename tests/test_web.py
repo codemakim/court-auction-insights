@@ -94,5 +94,59 @@ def test_api_list_and_detail_include_photos(tmp_path, crawler_db):
     listing = client.get("/api/auctions").json()
     detail = client.get("/api/auctions/2").json()
 
-    assert listing[1]["images"][0]["url"] == "/media/2/1"
+    item = next(item for item in listing if item["id"] == 2)
+    assert item["images"][0]["url"] == "/media/2/1"
     assert detail["images"][0]["url"] == "/media/2/1"
+
+
+def test_api_list_supports_filters_sort_and_enrichment_status(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    save_enrichment(
+        insights_db,
+        auction_id=2,
+        source_document_id=10,
+        model_name="gemma4:26b",
+        prompt_version="v1",
+        schema_version="v1",
+        status="success",
+        source_hash="abc123",
+        summary_title="서울시 B",
+        summary_bullets=["명세서 있음"],
+        risk_label="review_recommended",
+        risk_comment="사람 확인 권장",
+        mobile_card={},
+    )
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    filtered = client.get(
+        "/api/auctions",
+        params={
+            "q": "사당동",
+            "district": "동작구",
+            "subtype": "다세대",
+            "min_price": 100,
+            "max_price": 200,
+            "sale_spec_status": "downloaded",
+            "enrichment_status": "completed",
+        },
+    ).json()
+    pending = client.get("/api/auctions", params={"enrichment_status": "pending"}).json()
+    price_asc = client.get("/api/auctions", params={"sort": "price_asc"}).json()
+
+    assert [item["external_key"] for item in filtered] == ["2024타경2-1"]
+    assert filtered[0]["district"] == "동작구"
+    assert filtered[0]["enrichment_status"] == "completed"
+    assert [item["external_key"] for item in pending] == ["2024타경1-1"]
+    assert [item["external_key"] for item in price_asc] == ["2024타경1-1", "2024타경2-1"]
+
+
+def test_api_detail_serializes_pending_enrichment_state(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    detail = client.get("/api/auctions/1").json()
+
+    assert detail["district"] == "관악구"
+    assert detail["enrichment_status"] == "pending"

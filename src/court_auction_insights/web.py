@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -24,6 +24,8 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             "item_number": auction.item_number,
             "address": auction.address,
             "property_category": auction.property_category,
+            "residential_subtype": auction.residential_subtype,
+            "district": auction.district,
             "minimum_sale_price": auction.minimum_sale_price,
             "sale_date": auction.sale_date,
             "current_status": auction.current_status,
@@ -37,14 +39,51 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
                 for image in auction.images
             ],
             "enrichment": dict(enrichment) if enrichment is not None else None,
+            "enrichment_status": "completed" if enrichment is not None else "pending",
         }
 
     @app.get("/api/auctions")
-    def api_list_auctions():
-        return [
+    def api_list_auctions(
+        q: str | None = Query(default=None),
+        district: str | None = Query(default=None),
+        subtype: str | None = Query(default=None),
+        min_price: int | None = Query(default=None),
+        max_price: int | None = Query(default=None),
+        sale_spec_status: str | None = Query(default=None),
+        enrichment_status: str | None = Query(default=None),
+        sort: str = Query(default="latest"),
+    ):
+        items = [
             serialize_auction(auction, get_latest_enrichment(insights_db_path, auction.id))
             for auction in source.list_auctions()
         ]
+        if q:
+            needle = q.casefold()
+            items = [
+                item for item in items
+                if needle in item["address"].casefold()
+                or needle in item["case_number"].casefold()
+                or needle in item["external_key"].casefold()
+            ]
+        if district:
+            items = [item for item in items if item["district"] == district]
+        if subtype:
+            items = [item for item in items if item["residential_subtype"] == subtype]
+        if min_price is not None:
+            items = [item for item in items if item["minimum_sale_price"] is not None and item["minimum_sale_price"] >= min_price]
+        if max_price is not None:
+            items = [item for item in items if item["minimum_sale_price"] is not None and item["minimum_sale_price"] <= max_price]
+        if sale_spec_status:
+            items = [item for item in items if item["sale_spec_status"] == sale_spec_status]
+        if enrichment_status:
+            items = [item for item in items if item["enrichment_status"] == enrichment_status]
+        if sort == "price_asc":
+            items.sort(key=lambda item: (item["minimum_sale_price"] is None, item["minimum_sale_price"] or 0))
+        elif sort == "price_desc":
+            items.sort(key=lambda item: (item["minimum_sale_price"] is None, -(item["minimum_sale_price"] or 0)))
+        elif sort == "sale_date_asc":
+            items.sort(key=lambda item: (item["sale_date"] is None, item["sale_date"] or ""))
+        return items
 
     @app.get("/api/auctions/{auction_id}")
     def api_auction_detail(auction_id: int):
