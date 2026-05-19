@@ -3,12 +3,11 @@ import type { AuctionQuery } from '../types'
 type Props = {
   query: AuctionQuery
   onChange: (next: AuctionQuery) => void
+  districts: string[]
+  subtypes: string[]
 }
 
-const districts = ['관악구', '동작구', '강남구']
-const subtypes = ['아파트', '다세대', '단독주택', '다가구주택', '상가,오피스텔,근린시설']
-
-export function Filters({ query, onChange }: Props) {
+export function Filters({ query, onChange, districts, subtypes }: Props) {
   const update = (key: keyof AuctionQuery, value: string) => onChange({ ...query, [key]: value })
 
   return (

@@ -18,10 +18,6 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
           : data.sale_spec_status === 'extraction_failed'
             ? '명세서 추출 실패'
             : '명세서 있음'
-  const discountRate = data.appraisal_value && data.minimum_sale_price
-    ? Math.round((1 - data.minimum_sale_price / data.appraisal_value) * 100)
-    : null
-
   return (
     <main className="page detail-page">
       <a className="back-link" href="/">← 목록으로</a>
@@ -42,7 +38,8 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
             <div><dt>사건번호</dt><dd>{data.external_key}</dd></div>
             <div><dt>감정가</dt><dd>{data.appraisal_value?.toLocaleString('ko-KR') ?? '-'}원</dd></div>
             <div><dt>최저가</dt><dd>{data.minimum_sale_price?.toLocaleString('ko-KR') ?? '-'}원</dd></div>
-            <div><dt>할인율</dt><dd>{discountRate == null ? '-' : `${discountRate}%`}</dd></div>
+            <div><dt>할인율</dt><dd>{data.discount_rate == null ? '-' : `${data.discount_rate}%`}</dd></div>
+            <div><dt>감정가 대비 차액</dt><dd>{data.price_gap == null ? '-' : `${data.price_gap.toLocaleString('ko-KR')}원`}</dd></div>
             <div><dt>유찰</dt><dd>{data.failed_auction_count == null ? '-' : `${data.failed_auction_count}회`}</dd></div>
             <div><dt>매각기일</dt><dd>{data.sale_date ?? '-'}</dd></div>
             <div><dt>상태</dt><dd>{data.current_status ?? '-'}</dd></div>
@@ -53,6 +50,7 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
         <h2>매각물건명세서</h2>
         <p>{saleSpecLabel}</p>
         {data.sale_spec_error ? <p className="muted">최근 오류: {data.sale_spec_error}</p> : null}
+        {data.sale_spec_markdown ? <pre>{data.sale_spec_markdown}</pre> : null}
       </section>
       <section className="info-panel">
         <h2>감정평가 요약</h2>

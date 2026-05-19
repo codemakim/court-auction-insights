@@ -9,6 +9,10 @@ a { color: inherit; }
 .page { max-width: 1100px; margin: 0 auto; padding: 24px 16px 40px; }
 .hero p { margin: 0 0 6px; color: #8b6f47; text-transform: uppercase; letter-spacing: .08em; font-size: 12px; }
 .hero h1 { margin: 0 0 20px; font-size: 28px; }
+.summary-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 0 0 18px; }
+.summary-strip div { border-radius: 18px; background: #fff; padding: 14px; box-shadow: 0 10px 30px rgba(28,24,18,.06); }
+.summary-strip strong { display: block; font-size: 22px; color: #17202a; }
+.summary-strip span { display: block; margin-top: 4px; color: #7b7368; font-size: 12px; }
 .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
 .filters input, .filters select { width: 100%; border: 1px solid #d9d0c3; border-radius: 12px; background: white; padding: 11px 12px; color: #17202a; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }

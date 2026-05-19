@@ -25,12 +25,17 @@ export function AuctionCard({ auction }: Props) {
           {auction.residential_subtype ? <span>{auction.residential_subtype}</span> : null}
           <span>{saleSpecLabel(auction.sale_spec_status)}</span>
           <span>{auction.enrichment_status === 'pending' ? 'AI 요약 전' : 'AI 요약 완료'}</span>
+          {auction.image_count ? <span>사진 {auction.image_count}장</span> : null}
         </div>
         <h2>{auction.address}</h2>
         <dl className="facts">
           <div>
             <dt>최저가</dt>
             <dd>{auction.minimum_sale_price?.toLocaleString('ko-KR') ?? '-'}원</dd>
+          </div>
+          <div>
+            <dt>할인율</dt>
+            <dd>{auction.discount_rate == null ? '-' : `${auction.discount_rate}%`}</dd>
           </div>
           <div>
             <dt>매각기일</dt>

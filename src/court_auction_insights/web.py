@@ -16,7 +16,16 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
     image_root = Path(crawler_image_root or "/var/lib/court-auction-collector/data/images").resolve()
 
 
+    def derived_metrics(auction):
+        discount_rate = None
+        price_gap = None
+        if auction.appraisal_value and auction.minimum_sale_price is not None:
+            price_gap = auction.appraisal_value - auction.minimum_sale_price
+            discount_rate = round((1 - auction.minimum_sale_price / auction.appraisal_value) * 100)
+        return discount_rate, price_gap
+
     def serialize_auction(auction, enrichment=None):
+        discount_rate, price_gap = derived_metrics(auction)
         return {
             "id": auction.id,
             "external_key": auction.external_key,
@@ -34,6 +43,10 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             "appraisal_summary": auction.appraisal_summary,
             "sale_spec_status": auction.sale_spec_status,
             "sale_spec_error": auction.sale_spec_error,
+            "sale_spec_markdown": auction.sale_spec_markdown,
+            "discount_rate": discount_rate,
+            "price_gap": price_gap,
+            "image_count": len(auction.images),
             "images": [
                 {
                     "image_index": image.image_index,
@@ -44,6 +57,45 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             ],
             "enrichment": dict(enrichment) if enrichment is not None else None,
             "enrichment_status": "completed" if enrichment is not None else "pending",
+        }
+
+
+    @app.get("/api/summary")
+    def api_summary():
+        auctions = [
+            serialize_auction(auction, get_latest_enrichment(insights_db_path, auction.id))
+            for auction in source.list_auctions()
+        ]
+        sale_spec_status_counts = {}
+        enrichment_status_counts = {}
+        district_counts = {}
+        subtype_counts = {}
+        image_count = 0
+        min_price = None
+        max_price = None
+        for item in auctions:
+            sale_spec_status_counts[item["sale_spec_status"]] = sale_spec_status_counts.get(item["sale_spec_status"], 0) + 1
+            enrichment_status_counts[item["enrichment_status"]] = enrichment_status_counts.get(item["enrichment_status"], 0) + 1
+            if item["district"]:
+                district_counts[item["district"]] = district_counts.get(item["district"], 0) + 1
+            if item["residential_subtype"]:
+                subtype_counts[item["residential_subtype"]] = subtype_counts.get(item["residential_subtype"], 0) + 1
+            image_count += item["image_count"]
+            price = item["minimum_sale_price"]
+            if price is not None:
+                min_price = price if min_price is None else min(min_price, price)
+                max_price = price if max_price is None else max(max_price, price)
+        return {
+            "total_count": len(auctions),
+            "sale_spec_status_counts": sale_spec_status_counts,
+            "enrichment_status_counts": enrichment_status_counts,
+            "district_counts": district_counts,
+            "subtype_counts": subtype_counts,
+            "districts": sorted(district_counts),
+            "subtypes": sorted(subtype_counts),
+            "image_count": image_count,
+            "min_price": min_price,
+            "max_price": max_price,
         }
 
     @app.get("/api/auctions")

@@ -28,6 +28,10 @@ export type Auction = {
   appraisal_summary: string | null
   sale_spec_status: string
   sale_spec_error: string | null
+  sale_spec_markdown: string | null
+  discount_rate: number | null
+  price_gap: number | null
+  image_count: number
   enrichment_status: 'pending' | 'completed'
   enrichment: Enrichment
   images: AuctionImage[]
@@ -42,4 +46,17 @@ export type AuctionQuery = {
   sale_spec_status?: string
   enrichment_status?: string
   sort?: string
+}
+
+export type AuctionSummary = {
+  total_count: number
+  sale_spec_status_counts: Record<string, number>
+  enrichment_status_counts: Record<string, number>
+  district_counts: Record<string, number>
+  subtype_counts: Record<string, number>
+  districts: string[]
+  subtypes: string[]
+  image_count: number
+  min_price: number | null
+  max_price: number | null
 }

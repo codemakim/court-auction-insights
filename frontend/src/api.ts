@@ -1,4 +1,4 @@
-import type { Auction, AuctionQuery } from './types'
+import type { Auction, AuctionQuery, AuctionSummary } from './types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -9,6 +9,12 @@ function buildQueryString(query: AuctionQuery) {
   })
   const serialized = params.toString()
   return serialized ? `?${serialized}` : ''
+}
+
+export async function fetchSummary(): Promise<AuctionSummary> {
+  const response = await fetch(`${API_BASE_URL}/api/summary`)
+  if (!response.ok) throw new Error('failed to load auction summary')
+  return response.json()
 }
 
 export async function fetchAuctions(query: AuctionQuery): Promise<Auction[]> {

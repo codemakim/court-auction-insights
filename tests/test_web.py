@@ -173,3 +173,31 @@ def test_api_detail_includes_review_fields(tmp_path, crawler_db):
     assert detail["failed_auction_count"] == 0
     assert detail["appraisal_summary"] is None
     assert detail["sale_spec_status"] == "downloaded"
+
+
+def test_api_summary_exposes_collected_data_shape(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    summary = client.get("/api/summary").json()
+
+    assert summary["total_count"] == 4
+    assert summary["sale_spec_status_counts"]["downloaded"] == 1
+    assert summary["sale_spec_status_counts"]["not_uploaded"] == 2
+    assert summary["enrichment_status_counts"]["pending"] == 4
+    assert summary["image_count"] == 1
+    assert "관악구" in summary["districts"]
+
+
+def test_api_detail_includes_sale_spec_markdown_and_discount_fields(tmp_path, crawler_db):
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    detail = client.get("/api/auctions/2").json()
+
+    assert detail["sale_spec_markdown"] == "# markdown"
+    assert detail["discount_rate"] == 20
+    assert detail["price_gap"] == 40
+    assert detail["image_count"] == 1
