@@ -99,6 +99,7 @@ class CrawlerSource:
 
         district_match = re.search(r"([가-힣]+구)", row["address"])
         appraisal_summary = html.unescape(row["appraisal_summary"]) if row["appraisal_summary"] else None
+        property_facts = CrawlerSource._extract_property_facts(row["address"], appraisal_summary)
         return AuctionSourceRecord(
             id=row["id"],
             external_key=row["external_key"],
@@ -115,6 +116,12 @@ class CrawlerSource:
             current_status=row["current_status"],
             appraisal_summary=appraisal_summary,
             area_note=CrawlerSource._extract_area_note(appraisal_summary),
+            neighborhood=property_facts["neighborhood"],
+            building_name=property_facts["building_name"],
+            floor=property_facts["floor"],
+            unit=property_facts["unit"],
+            total_floors=property_facts["total_floors"],
+            approval_date=property_facts["approval_date"],
             sale_spec_status=status,
             sale_spec_error=row["last_download_error"],
             sale_spec_document_id=row["sale_spec_document_id"],
@@ -122,6 +129,31 @@ class CrawlerSource:
             sale_spec_markdown=row["markdown_text"],
             images=images,
         )
+
+    @staticmethod
+    def _extract_property_facts(address: str, appraisal_summary: str | None) -> dict[str, object | None]:
+        neighborhood_match = re.search(r"([가-힣]+동)", address)
+        floor_match = re.search(r"(\d+)층", address)
+        unit_match = re.search(r"(\d+호)", address)
+        building_name = None
+        if neighborhood_match:
+            after_neighborhood = address[neighborhood_match.end():].strip()
+            after_lot = re.sub(r"^[0-9산\-]+\s*", "", after_neighborhood)
+            building_match = re.match(r"(.+?)(?:\s+\d+동|\s+\d+층|\s+\d+호|$)", after_lot)
+            if building_match:
+                candidate = building_match.group(1).strip(" ,")
+                building_name = candidate or None
+        summary = appraisal_summary or ""
+        total_floors_match = re.search(r"(\d+)층\s*건물", summary)
+        approval_match = re.search(r"사용승인일\s*[:：]?\s*(\d{4}[.]\d{1,2}[.]\d{1,2})", summary)
+        return {
+            "neighborhood": neighborhood_match.group(1) if neighborhood_match else None,
+            "building_name": building_name,
+            "floor": int(floor_match.group(1)) if floor_match else None,
+            "unit": unit_match.group(1) if unit_match else None,
+            "total_floors": int(total_floors_match.group(1)) if total_floors_match else None,
+            "approval_date": approval_match.group(1) if approval_match else None,
+        }
 
     @staticmethod
     def _extract_area_note(appraisal_summary: str | None) -> str | None:

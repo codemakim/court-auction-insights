@@ -42,6 +42,12 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             "current_status": auction.current_status,
             "appraisal_summary": auction.appraisal_summary,
             "area_note": auction.area_note,
+            "neighborhood": auction.neighborhood,
+            "building_name": auction.building_name,
+            "floor": auction.floor,
+            "unit": auction.unit,
+            "total_floors": auction.total_floors,
+            "approval_date": auction.approval_date,
             "sale_spec_status": auction.sale_spec_status,
             "sale_spec_error": auction.sale_spec_error,
             "sale_spec_markdown": auction.sale_spec_markdown,
@@ -72,6 +78,7 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
         district_counts = {}
         subtype_counts = {}
         image_count = 0
+        derived_fact_count = 0
         min_price = None
         max_price = None
         for item in auctions:
@@ -82,6 +89,8 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             if item["residential_subtype"]:
                 subtype_counts[item["residential_subtype"]] = subtype_counts.get(item["residential_subtype"], 0) + 1
             image_count += item["image_count"]
+            if item["building_name"] or item["floor"] or item["approval_date"] or item["area_note"]:
+                derived_fact_count += 1
             price = item["minimum_sale_price"]
             if price is not None:
                 min_price = price if min_price is None else min(min_price, price)
@@ -95,6 +104,7 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             "districts": sorted(district_counts),
             "subtypes": sorted(subtype_counts),
             "image_count": image_count,
+            "derived_fact_count": derived_fact_count,
             "min_price": min_price,
             "max_price": max_price,
         }

@@ -215,3 +215,27 @@ def test_api_detail_decodes_summary_and_includes_area_note(tmp_path, crawler_db)
 
     assert detail["appraisal_summary"].startswith('본건은 "역세권"입니다.')
     assert detail["area_note"] == '대지권 면적은 31.25㎡입니다.'
+
+
+def test_api_detail_includes_derived_property_facts(tmp_path, crawler_db):
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute(
+            "UPDATE auctions SET address = ?, appraisal_summary = ? WHERE id = 1",
+            (
+                '서울특별시 은평구 응암동 176 응암푸르지오 104동 4층402호',
+                '철근콘크리트구조 평지붕 15층 건물 내 제4층 제402호로서, (사용승인일 : 2021.2.18) 외벽 마감',
+            ),
+        )
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    detail = client.get("/api/auctions/1").json()
+
+    assert detail["neighborhood"] == '응암동'
+    assert detail["building_name"] == '응암푸르지오'
+    assert detail["floor"] == 4
+    assert detail["unit"] == '402호'
+    assert detail["total_floors"] == 15
+    assert detail["approval_date"] == '2021.2.18'

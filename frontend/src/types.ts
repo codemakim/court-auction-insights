@@ -27,6 +27,12 @@ export type Auction = {
   current_status: string | null
   appraisal_summary: string | null
   area_note: string | null
+  neighborhood: string | null
+  building_name: string | null
+  floor: number | null
+  unit: string | null
+  total_floors: number | null
+  approval_date: string | null
   sale_spec_status: string
   sale_spec_error: string | null
   sale_spec_markdown: string | null
@@ -58,6 +64,7 @@ export type AuctionSummary = {
   districts: string[]
   subtypes: string[]
   image_count: number
+  derived_fact_count: number
   min_price: number | null
   max_price: number | null
 }

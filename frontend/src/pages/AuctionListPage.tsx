@@ -22,6 +22,7 @@ export function AuctionListPage() {
           <div><strong>{(summary.sale_spec_status_counts.downloaded ?? 0).toLocaleString('ko-KR')}</strong><span>명세서 확보</span></div>
           <div><strong>{(summary.sale_spec_status_counts.download_pending ?? 0).toLocaleString('ko-KR')}</strong><span>명세서 대기</span></div>
           <div><strong>{summary.image_count.toLocaleString('ko-KR')}</strong><span>사진</span></div>
+          <div><strong>{summary.derived_fact_count.toLocaleString('ko-KR')}</strong><span>실체 단서</span></div>
           <div><strong>{(summary.enrichment_status_counts.completed ?? 0).toLocaleString('ko-KR')}</strong><span>AI 요약</span></div>
         </section>
       ) : null}

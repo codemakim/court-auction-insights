@@ -31,4 +31,10 @@ class AuctionSourceRecord:
     sale_spec_content_hash: str | None
     sale_spec_markdown: str | None
     area_note: str | None = None
+    neighborhood: str | None = None
+    building_name: str | None = None
+    floor: int | None = None
+    unit: str | None = None
+    total_floors: int | None = None
+    approval_date: str | None = None
     images: tuple[AuctionImageRecord, ...] = ()

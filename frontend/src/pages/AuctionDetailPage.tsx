@@ -36,6 +36,11 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
           <h1>{data.address}</h1>
           <dl className="detail-facts metrics">
             <div><dt>사건번호</dt><dd>{data.external_key}</dd></div>
+            <div><dt>동</dt><dd>{data.neighborhood ?? '-'}</dd></div>
+            <div><dt>건물명</dt><dd>{data.building_name ?? '-'}</dd></div>
+            <div><dt>층/호</dt><dd>{[data.floor ? `${data.floor}층` : null, data.unit].filter(Boolean).join(' ') || '-'}</dd></div>
+            <div><dt>전체층</dt><dd>{data.total_floors == null ? '-' : `${data.total_floors}층`}</dd></div>
+            <div><dt>사용승인일</dt><dd>{data.approval_date ?? '-'}</dd></div>
             <div><dt>감정가</dt><dd>{data.appraisal_value?.toLocaleString('ko-KR') ?? '-'}원</dd></div>
             <div><dt>최저가</dt><dd>{data.minimum_sale_price?.toLocaleString('ko-KR') ?? '-'}원</dd></div>
             <div><dt>할인율</dt><dd>{data.discount_rate == null ? '-' : `${data.discount_rate}%`}</dd></div>

@@ -68,3 +68,32 @@ def test_list_auctions_extracts_area_note_from_appraisal_summary(crawler_db):
     row = next(row for row in CrawlerSource(crawler_db).list_auctions() if row.id == 1)
 
     assert row.area_note == '대상물건의 집합건축물대장상 대지면적은 263.7㎡입니다.'
+
+
+def test_list_auctions_derives_property_facts_from_address_and_summary(crawler_db):
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute(
+            "UPDATE auctions SET address = ?, appraisal_summary = ? WHERE id = 1",
+            (
+                '서울특별시 은평구 응암동 176 응암푸르지오 104동 4층402호',
+                '철근콘크리트구조 평지붕 15층 건물 내 제4층 제402호로서, (사용승인일 : 2021.2.18) 외벽 마감',
+            ),
+        )
+
+    row = next(row for row in CrawlerSource(crawler_db).list_auctions() if row.id == 1)
+
+    assert row.neighborhood == '응암동'
+    assert row.building_name == '응암푸르지오'
+    assert row.floor == 4
+    assert row.unit == '402호'
+    assert row.total_floors == 15
+    assert row.approval_date == '2021.2.18'
+
+
+def test_list_auctions_leaves_unknown_property_facts_empty(crawler_db):
+    row = next(row for row in CrawlerSource(crawler_db).list_auctions() if row.id == 1)
+
+    assert row.building_name is None
+    assert row.floor is None
+    assert row.total_floors is None

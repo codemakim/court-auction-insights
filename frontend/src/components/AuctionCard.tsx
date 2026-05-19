@@ -28,6 +28,16 @@ export function AuctionCard({ auction }: Props) {
           {auction.image_count ? <span>사진 {auction.image_count}장</span> : null}
         </div>
         <h2>{auction.address}</h2>
+        {(auction.building_name || auction.floor || auction.unit || auction.approval_date) ? (
+          <p className="property-facts">
+            {[
+              auction.building_name,
+              auction.floor ? `${auction.floor}층` : null,
+              auction.unit,
+              auction.approval_date ? `사용승인 ${auction.approval_date}` : null,
+            ].filter(Boolean).join(' · ')}
+          </p>
+        ) : null}
         {auction.area_note ? <p className="card-note">{auction.area_note}</p> : null}
         <dl className="facts">
           <div>
