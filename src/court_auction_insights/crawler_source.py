@@ -66,7 +66,13 @@ class CrawlerSource:
             LEFT JOIN documents d
                 ON d.auction_id = a.id AND d.document_type = 'sale_spec'
             LEFT JOIN document_texts dt
-                ON dt.document_id = d.id
+                ON dt.id = (
+                    SELECT latest_dt.id
+                    FROM document_texts latest_dt
+                    WHERE latest_dt.document_id = d.id
+                    ORDER BY latest_dt.id DESC
+                    LIMIT 1
+                )
             {where_clause}
             ORDER BY a.last_seen_at DESC, a.id DESC
         """

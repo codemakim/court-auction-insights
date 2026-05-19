@@ -317,3 +317,23 @@ def test_api_sanitizes_existing_html_in_enrichment(tmp_path, crawler_db):
     assert data["enrichment"]["summary_title"] == "금천구 가산동"
     assert data["enrichment"]["summary_bullets_json"] == '["임차인 없음"]'
     assert data["enrichment"]["risk_comment"] == "낮음"
+
+
+
+def test_api_uses_latest_document_text_version(tmp_path, crawler_db):
+    import sqlite3
+    from fastapi.testclient import TestClient
+    from court_auction_insights.db import init_db
+    from court_auction_insights.web import create_app
+
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute(
+            "INSERT INTO document_texts VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (23, 10, "extracted", "new raw", "# 매각물건명세서\n\n최신 정제본", "2026-05-20", "v3")
+        )
+
+    data = TestClient(create_app(crawler_db, insights_db, tmp_path)).get("/api/auctions/2").json()
+
+    assert data["sale_spec_markdown"] == "# 매각물건명세서\n\n최신 정제본"
