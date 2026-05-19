@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['tailcode-wsl.tail81a535.ts.net'],
+    allowedHosts: ['tailcode-wsl', 'tailcode-wsl.tail81a535.ts.net', '100.99.226.35'],
     proxy: {
       '/api': 'http://127.0.0.1:8787',
       '/media': 'http://127.0.0.1:8787',
