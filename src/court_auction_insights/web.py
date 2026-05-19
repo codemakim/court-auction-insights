@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -16,6 +17,29 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
     image_root = Path(crawler_image_root or "/var/lib/court-auction-collector/data/images").resolve()
 
 
+    def sanitize_api_text(value):
+        if isinstance(value, str):
+            return re.sub(r"</?[^>]+>", "", value).strip()
+        if isinstance(value, list):
+            return [sanitize_api_text(item) for item in value]
+        if isinstance(value, dict):
+            return {key: sanitize_api_text(item) for key, item in value.items()}
+        return value
+
+    def serialize_enrichment(enrichment):
+        if enrichment is None:
+            return None
+        payload = dict(enrichment)
+        for key in ("summary_title", "risk_label", "risk_comment"):
+            payload[key] = sanitize_api_text(payload.get(key))
+        if payload.get("summary_bullets_json"):
+            try:
+                bullets = sanitize_api_text(json.loads(payload["summary_bullets_json"]))
+                payload["summary_bullets_json"] = json.dumps(bullets, ensure_ascii=False)
+            except json.JSONDecodeError:
+                payload["summary_bullets_json"] = "[]"
+        return payload
+
     def derived_metrics(auction):
         discount_rate = None
         price_gap = None
@@ -26,6 +50,19 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
 
     def serialize_auction(auction, enrichment=None):
         discount_rate, price_gap = derived_metrics(auction)
+        successful_enrichment = enrichment if enrichment is not None and enrichment["status"] == "success" else None
+        if enrichment is None:
+            enrichment_status = "pending"
+            enrichment_error = None
+        elif enrichment["status"] == "success":
+            enrichment_status = "completed"
+            enrichment_error = None
+        elif enrichment["status"] == "failed":
+            enrichment_status = "failed"
+            enrichment_error = enrichment["error_message"]
+        else:
+            enrichment_status = "pending"
+            enrichment_error = None
         return {
             "id": auction.id,
             "external_key": auction.external_key,
@@ -62,8 +99,9 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
                 }
                 for image in auction.images
             ],
-            "enrichment": dict(enrichment) if enrichment is not None else None,
-            "enrichment_status": "completed" if enrichment is not None else "pending",
+            "enrichment": serialize_enrichment(successful_enrichment),
+            "enrichment_status": enrichment_status,
+            "enrichment_error": enrichment_error,
         }
 
 

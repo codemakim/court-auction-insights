@@ -35,6 +35,7 @@ export function Filters({ query, onChange, districts, subtypes }: Props) {
         <option value="">AI 전체</option>
         <option value="pending">AI 요약 전</option>
         <option value="completed">AI 요약 완료</option>
+        <option value="failed">AI 요약 실패</option>
       </select>
       <select value={query.sort ?? 'latest'} onChange={(event) => update('sort', event.target.value)}>
         <option value="latest">최근 수집순</option>

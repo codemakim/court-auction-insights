@@ -71,6 +71,8 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
         <h2>AI 요약</h2>
         {data.enrichment_status === 'pending' ? (
           <p>AI 요약 전입니다. 매각물건명세서가 준비되면 순차적으로 요약됩니다.</p>
+        ) : data.enrichment_status === 'failed' ? (
+          <p className="risk">AI 요약 실패: {data.enrichment_error ?? '오류 기록 없음'}</p>
         ) : (
           <>
             <h3>{data.enrichment?.summary_title}</h3>

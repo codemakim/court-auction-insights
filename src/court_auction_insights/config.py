@@ -15,5 +15,5 @@ class Settings(BaseSettings):
     worker_interval_seconds: int = 60
     web_host: str = "127.0.0.1"
     web_port: int = 8787
-    prompt_version: str = "v2"
+    prompt_version: str = "v3"
     schema_version: str = "v1"

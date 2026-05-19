@@ -239,3 +239,81 @@ def test_api_detail_includes_derived_property_facts(tmp_path, crawler_db):
     assert detail["unit"] == '402호'
     assert detail["total_floors"] == 15
     assert detail["approval_date"] == '2021.2.18'
+
+
+
+def test_api_reports_only_successful_enrichments_as_completed(tmp_path, crawler_db):
+    from fastapi.testclient import TestClient
+    from court_auction_insights.db import init_db, save_enrichment
+    from court_auction_insights.web import create_app
+
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    save_enrichment(
+        insights_db,
+        auction_id=2,
+        source_document_id=10,
+        model_name="gemma4:26b",
+        prompt_version="v3",
+        schema_version="v1",
+        status="success",
+        source_hash="abc123",
+        summary_title="요약 완료",
+        summary_bullets=["핵심"],
+        risk_label="review_recommended",
+        risk_comment="검토 필요",
+    )
+    save_enrichment(
+        insights_db,
+        auction_id=4,
+        source_document_id=11,
+        model_name="gemma4:26b",
+        prompt_version="v3",
+        schema_version="v1",
+        status="failed",
+        source_hash="def456",
+        error_message="timeout",
+    )
+
+    client = TestClient(create_app(crawler_db, insights_db, tmp_path))
+
+    summary = client.get("/api/summary").json()
+    assert summary["enrichment_status_counts"] == {"completed": 1, "pending": 2, "failed": 1}
+
+    success = client.get("/api/auctions/2").json()
+    failed = client.get("/api/auctions/4").json()
+    assert success["enrichment_status"] == "completed"
+    assert success["enrichment"]["summary_title"] == "요약 완료"
+    assert failed["enrichment_status"] == "failed"
+    assert failed["enrichment"] is None
+    assert failed["enrichment_error"] == "timeout"
+
+
+
+def test_api_sanitizes_existing_html_in_enrichment(tmp_path, crawler_db):
+    from fastapi.testclient import TestClient
+    from court_auction_insights.db import init_db, save_enrichment
+    from court_auction_insights.web import create_app
+
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    save_enrichment(
+        insights_db,
+        auction_id=2,
+        source_document_id=10,
+        model_name="gemma4:26b",
+        prompt_version="v2",
+        schema_version="v1",
+        status="success",
+        source_hash="abc123",
+        summary_title="<b>금천구 가산동</b>",
+        summary_bullets=["<i>임차인 없음</i>"],
+        risk_label="low",
+        risk_comment="<strong>낮음</strong>",
+    )
+
+    data = TestClient(create_app(crawler_db, insights_db, tmp_path)).get("/api/auctions/2").json()
+
+    assert data["enrichment"]["summary_title"] == "금천구 가산동"
+    assert data["enrichment"]["summary_bullets_json"] == '["임차인 없음"]'
+    assert data["enrichment"]["risk_comment"] == "낮음"

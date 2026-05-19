@@ -52,3 +52,9 @@ h2 { margin: 0 0 12px; color: #17202a; font-size: 16px; font-weight: 700; line-h
 .area-note p { margin: 0; line-height: 1.55; }
 
 .property-facts { margin: -4px 0 10px; color: #4b5563; font-size: 13px; font-weight: 700; line-height: 1.45; }
+.ai-card-summary { margin: 12px 0; padding: 12px; border-radius: 14px; background: #f7f1e8; color: #2b241c; border: 1px solid rgba(117, 88, 54, .16); }
+.ai-card-summary strong { display: block; margin-bottom: 6px; font-size: 14px; line-height: 1.35; }
+.ai-card-summary ul { margin: 6px 0; padding-left: 18px; color: #4d4237; }
+.ai-card-summary li { margin: 3px 0; }
+.ai-card-summary p { margin: 6px 0 0; color: #6f4b25; font-size: 13px; line-height: 1.45; }
+.ai-card-summary.failed { background: #fff1f0; border-color: rgba(177, 45, 35, .18); color: #8a2b22; }

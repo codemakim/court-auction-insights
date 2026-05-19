@@ -54,6 +54,13 @@ def _strip_boilerplate(text: str) -> str:
     return cleaned.strip()
 
 
+def _remove_property_display_section(text: str) -> str:
+    # 부동산의 표시는 건물 전체 층별 면적, 대지권, 회차별 가격표가 길게 붙는 구간이다.
+    # 이 정보는 이미 구조화 필드/area_note/가격 필드로 별도 전달하므로 AI 입력에서는 제외한다.
+    # 단, 이 구간 앞의 최선순위/임차·점유 표는 핵심 리스크라 보존한다.
+    return re.split(r"부동산의\s*표시", text, maxsplit=1)[0].strip()
+
+
 def _trim(text: str | None, limit: int) -> str | None:
     if not text:
         return None
@@ -66,7 +73,7 @@ def _trim(text: str | None, limit: int) -> str | None:
 def _extract_important_sale_spec(markdown: str | None, *, limit: int = 5200) -> str | None:
     if not markdown:
         return None
-    cleaned = _strip_boilerplate(markdown)
+    cleaned = _remove_property_display_section(_strip_boilerplate(markdown))
     lines = [_collapse_whitespace(line) for line in cleaned.splitlines()]
     lines = [line for line in lines if line]
 
@@ -78,13 +85,24 @@ def _extract_important_sale_spec(markdown: str | None, *, limit: int = 5200) -> 
     # 명세서 OCR/텍스트 추출은 줄 구분이 깨지는 경우가 많아서, 키워드 라인만으로
     # 부족하면 정제된 앞부분도 함께 넣는다. 그래도 반복 양식은 제거된 상태다.
     joined = "\n".join(dict.fromkeys(important))
-    if len(joined) < 1500:
-        prefix = "\n".join(lines[:80])
+    if len(joined) < 900:
+        prefix = "\n".join(lines[:30])
         joined = f"{joined}\n\n[정제 원문 앞부분]\n{prefix}" if joined else prefix
 
     if len(joined) > limit:
         joined = joined[:limit].rstrip() + "…"
     return joined
+
+
+def _sanitize_model_text(value: Any) -> Any:
+    if isinstance(value, str):
+        value = re.sub(r"</?[^>]+>", "", value)
+        return _collapse_whitespace(value)
+    if isinstance(value, list):
+        return [_sanitize_model_text(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _sanitize_model_text(item) for key, item in value.items()}
+    return value
 
 
 def build_compact_auction_payload(auction: Any) -> dict[str, Any]:
@@ -163,4 +181,4 @@ class OllamaClient:
         }
         response = requests.post(f"{self.base_url}/api/chat", json=payload, timeout=self.timeout_seconds)
         response.raise_for_status()
-        return json.loads(response.json()["message"]["content"])
+        return _sanitize_model_text(json.loads(response.json()["message"]["content"]))

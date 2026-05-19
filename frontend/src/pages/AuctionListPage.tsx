@@ -23,7 +23,8 @@ export function AuctionListPage() {
           <div><strong>{(summary.sale_spec_status_counts.download_pending ?? 0).toLocaleString('ko-KR')}</strong><span>명세서 대기</span></div>
           <div><strong>{summary.image_count.toLocaleString('ko-KR')}</strong><span>사진</span></div>
           <div><strong>{summary.derived_fact_count.toLocaleString('ko-KR')}</strong><span>실체 단서</span></div>
-          <div><strong>{(summary.enrichment_status_counts.completed ?? 0).toLocaleString('ko-KR')}</strong><span>AI 요약</span></div>
+          <div><strong>{(summary.enrichment_status_counts.completed ?? 0).toLocaleString('ko-KR')}</strong><span>AI 성공</span></div>
+          <div><strong>{(summary.enrichment_status_counts.failed ?? 0).toLocaleString('ko-KR')}</strong><span>AI 실패</span></div>
         </section>
       ) : null}
       <Filters query={query} onChange={setQuery} districts={summary?.districts ?? []} subtypes={summary?.subtypes ?? []} />

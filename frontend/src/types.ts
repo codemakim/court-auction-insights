@@ -39,7 +39,8 @@ export type Auction = {
   discount_rate: number | null
   price_gap: number | null
   image_count: number
-  enrichment_status: 'pending' | 'completed'
+  enrichment_status: 'pending' | 'completed' | 'failed'
+  enrichment_error: string | null
   enrichment: Enrichment
   images: AuctionImage[]
 }

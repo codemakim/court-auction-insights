@@ -11,7 +11,24 @@ function saleSpecLabel(status: Auction['sale_spec_status']) {
   return '명세서 있음'
 }
 
+function aiLabel(status: Auction['enrichment_status']) {
+  if (status === 'completed') return 'AI 요약 완료'
+  if (status === 'failed') return 'AI 요약 실패'
+  return 'AI 요약 전'
+}
+
+function parseBullets(value: string | null | undefined) {
+  if (!value) return [] as string[]
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return [] as string[]
+  }
+}
+
 export function AuctionCard({ auction }: Props) {
+  const bullets = parseBullets(auction.enrichment?.summary_bullets_json).slice(0, 2)
   return (
     <a className="card" href={`/auctions/${auction.id}`}>
       {auction.images[0] ? (
@@ -24,7 +41,7 @@ export function AuctionCard({ auction }: Props) {
           {auction.district ? <span>{auction.district}</span> : null}
           {auction.residential_subtype ? <span>{auction.residential_subtype}</span> : null}
           <span>{saleSpecLabel(auction.sale_spec_status)}</span>
-          <span>{auction.enrichment_status === 'pending' ? 'AI 요약 전' : 'AI 요약 완료'}</span>
+          <span>{aiLabel(auction.enrichment_status)}</span>
           {auction.image_count ? <span>사진 {auction.image_count}장</span> : null}
         </div>
         <h2>{auction.address}</h2>
@@ -39,6 +56,15 @@ export function AuctionCard({ auction }: Props) {
           </p>
         ) : null}
         {auction.area_note ? <p className="card-note">{auction.area_note}</p> : null}
+        {auction.enrichment_status === 'completed' && auction.enrichment ? (
+          <div className="ai-card-summary">
+            <strong>{auction.enrichment.summary_title}</strong>
+            {bullets.length ? <ul>{bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}</ul> : null}
+            {auction.enrichment.risk_comment ? <p>{auction.enrichment.risk_comment}</p> : null}
+          </div>
+        ) : auction.enrichment_status === 'failed' ? (
+          <p className="ai-card-summary failed">AI 요약 실패: {auction.enrichment_error ?? '오류 기록 없음'}</p>
+        ) : null}
         <dl className="facts">
           <div>
             <dt>최저가</dt>
