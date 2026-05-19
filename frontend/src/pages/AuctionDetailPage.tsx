@@ -44,6 +44,12 @@ export function AuctionDetailPage({ auctionId }: { auctionId: number }) {
             <div><dt>매각기일</dt><dd>{data.sale_date ?? '-'}</dd></div>
             <div><dt>상태</dt><dd>{data.current_status ?? '-'}</dd></div>
           </dl>
+          {data.area_note ? (
+            <div className="area-note">
+              <strong>면적 참고</strong>
+              <p>{data.area_note}</p>
+            </div>
+          ) : null}
         </div>
       </section>
       <section className="info-panel">

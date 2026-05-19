@@ -41,6 +41,7 @@ def create_app(crawler_db_path: Path, insights_db_path: Path, crawler_image_root
             "sale_date": auction.sale_date,
             "current_status": auction.current_status,
             "appraisal_summary": auction.appraisal_summary,
+            "area_note": auction.area_note,
             "sale_spec_status": auction.sale_spec_status,
             "sale_spec_error": auction.sale_spec_error,
             "sale_spec_markdown": auction.sale_spec_markdown,

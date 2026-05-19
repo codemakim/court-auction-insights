@@ -201,3 +201,17 @@ def test_api_detail_includes_sale_spec_markdown_and_discount_fields(tmp_path, cr
     assert detail["discount_rate"] == 20
     assert detail["price_gap"] == 40
     assert detail["image_count"] == 1
+
+
+def test_api_detail_decodes_summary_and_includes_area_note(tmp_path, crawler_db):
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute("UPDATE auctions SET appraisal_summary = ? WHERE id = 1", ('본건은 &quot;역세권&quot;입니다.\n대지권 면적은 31.25㎡입니다.',))
+    insights_db = tmp_path / "insights.db"
+    init_db(insights_db)
+    client = TestClient(create_app(crawler_db, insights_db))
+
+    detail = client.get("/api/auctions/1").json()
+
+    assert detail["appraisal_summary"].startswith('본건은 "역세권"입니다.')
+    assert detail["area_note"] == '대지권 면적은 31.25㎡입니다.'

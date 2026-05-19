@@ -48,3 +48,23 @@ def test_list_auctions_distinguishes_sale_spec_states(crawler_db):
     assert by_key['2024타경1-1'].sale_spec_status == 'not_uploaded'
     assert by_key['2024타경2-1'].sale_spec_status == 'downloaded'
     assert by_key['2024타경3-2'].sale_spec_status == 'extraction_failed'
+
+
+def test_list_auctions_decodes_html_entities_in_appraisal_summary(crawler_db):
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute("UPDATE auctions SET appraisal_summary = ? WHERE id = 1", ('본건은 &quot;역세권&quot; 인근입니다.',))
+
+    row = next(row for row in CrawlerSource(crawler_db).list_auctions() if row.id == 1)
+
+    assert row.appraisal_summary == '본건은 "역세권" 인근입니다.'
+
+
+def test_list_auctions_extracts_area_note_from_appraisal_summary(crawler_db):
+    import sqlite3
+    with sqlite3.connect(crawler_db) as conn:
+        conn.execute("UPDATE auctions SET appraisal_summary = ? WHERE id = 1", ('대상물건의 집합건축물대장상 대지면적은 263.7㎡입니다.\n다른 문장',))
+
+    row = next(row for row in CrawlerSource(crawler_db).list_auctions() if row.id == 1)
+
+    assert row.area_note == '대상물건의 집합건축물대장상 대지면적은 263.7㎡입니다.'

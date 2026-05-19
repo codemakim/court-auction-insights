@@ -26,6 +26,7 @@ export type Auction = {
   sale_date: string | null
   current_status: string | null
   appraisal_summary: string | null
+  area_note: string | null
   sale_spec_status: string
   sale_spec_error: string | null
   sale_spec_markdown: string | null

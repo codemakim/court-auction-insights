@@ -28,6 +28,7 @@ export function AuctionCard({ auction }: Props) {
           {auction.image_count ? <span>사진 {auction.image_count}장</span> : null}
         </div>
         <h2>{auction.address}</h2>
+        {auction.area_note ? <p className="card-note">{auction.area_note}</p> : null}
         <dl className="facts">
           <div>
             <dt>최저가</dt>

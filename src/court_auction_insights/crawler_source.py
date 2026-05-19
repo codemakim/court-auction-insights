@@ -1,3 +1,4 @@
+import html
 import re
 import sqlite3
 from pathlib import Path
@@ -97,6 +98,7 @@ class CrawlerSource:
             status = "extraction_failed"
 
         district_match = re.search(r"([가-힣]+구)", row["address"])
+        appraisal_summary = html.unescape(row["appraisal_summary"]) if row["appraisal_summary"] else None
         return AuctionSourceRecord(
             id=row["id"],
             external_key=row["external_key"],
@@ -111,7 +113,8 @@ class CrawlerSource:
             failed_auction_count=row["failed_auction_count"],
             sale_date=row["sale_date"],
             current_status=row["current_status"],
-            appraisal_summary=row["appraisal_summary"],
+            appraisal_summary=appraisal_summary,
+            area_note=CrawlerSource._extract_area_note(appraisal_summary),
             sale_spec_status=status,
             sale_spec_error=row["last_download_error"],
             sale_spec_document_id=row["sale_spec_document_id"],
@@ -119,6 +122,16 @@ class CrawlerSource:
             sale_spec_markdown=row["markdown_text"],
             images=images,
         )
+
+    @staticmethod
+    def _extract_area_note(appraisal_summary: str | None) -> str | None:
+        if not appraisal_summary:
+            return None
+        keywords = ("전유면적", "전용면적", "공급면적", "건물면적", "대지권", "대지면적", "면적은", "㎡")
+        for line in (line.strip() for line in appraisal_summary.splitlines()):
+            if line and any(keyword in line for keyword in keywords):
+                return line
+        return None
 
     @staticmethod
     def _suppress_case_shared_images(records: list[AuctionSourceRecord]) -> list[AuctionSourceRecord]:

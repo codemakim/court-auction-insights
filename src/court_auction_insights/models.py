@@ -30,4 +30,5 @@ class AuctionSourceRecord:
     sale_spec_document_id: int | None
     sale_spec_content_hash: str | None
     sale_spec_markdown: str | None
+    area_note: str | None = None
     images: tuple[AuctionImageRecord, ...] = ()
