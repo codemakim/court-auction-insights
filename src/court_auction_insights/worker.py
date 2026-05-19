@@ -30,9 +30,21 @@ class EnrichmentWorker:
 
     def run_once(self) -> WorkerResult:
         for auction in self.crawler_source.list_auctions():
-            if get_latest_enrichment(self.db_path, auction.id) is not None:
-                continue
             if auction.sale_spec_status != "downloaded":
+                continue
+            latest = get_latest_enrichment(self.db_path, auction.id)
+            if (
+                latest is not None
+                and latest["source_hash"] == auction.sale_spec_content_hash
+                and latest["prompt_version"] == self.prompt_version
+                and latest["schema_version"] == self.schema_version
+                and latest["status"] in {"success", "failed"}
+            ):
+                continue
+
+            try:
+                payload = self.ollama_client.enrich(auction)
+            except Exception as exc:
                 save_enrichment(
                     self.db_path,
                     auction_id=auction.id,
@@ -40,12 +52,12 @@ class EnrichmentWorker:
                     model_name=self.model_name,
                     prompt_version=self.prompt_version,
                     schema_version=self.schema_version,
-                    status="waiting_for_source_document",
+                    status="failed",
                     source_hash=auction.sale_spec_content_hash,
+                    error_message=str(exc),
                 )
-                return WorkerResult(auction.id, "waiting_for_source_document")
+                return WorkerResult(auction.id, "failed")
 
-            payload = self.ollama_client.enrich(auction)
             save_enrichment(
                 self.db_path,
                 auction_id=auction.id,

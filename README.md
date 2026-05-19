@@ -179,7 +179,16 @@ Run one enrichment pass at a time:
 court-auction-insights worker-once
 ```
 
-The initial worker is intentionally sequential:
+Run continuously, one auction at a time:
+
+```bash
+. .venv/bin/activate
+court-auction-insights worker-loop
+```
+
+`gemma4:26b` can take several minutes on the first request while the model is loaded into memory. The worker therefore uses a longer Ollama timeout and sends a compact prompt that removes repeated sale-spec boilerplate before calling the model.
+
+The worker is intentionally sequential:
 
 1. find one eligible auction,
 2. build a structured prompt,

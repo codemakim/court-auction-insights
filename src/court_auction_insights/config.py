@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     db_path: Path
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "gemma4:26b"
+    ollama_timeout_seconds: int = 600
+    worker_interval_seconds: int = 60
     web_host: str = "127.0.0.1"
     web_port: int = 8787
-    prompt_version: str = "v1"
+    prompt_version: str = "v2"
     schema_version: str = "v1"
